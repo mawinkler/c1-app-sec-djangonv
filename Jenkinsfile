@@ -52,6 +52,16 @@ node('jenkins-jenkins-slave') {
             ],
           ]).toString(),
         ])
+      } catch(e) {
+        script {
+          sh 'pwd'
+          docker.image('mawinkler/scan-report').pull()
+          docker.image('mawinkler/scan-report').inside("--entrypoint=''") {
+            sh 'python /usr/src/app/scan-report.py --config_path /usr/src/app --name "${REPOSITORY}" --image_tag "${BUILD_NUMBER}" --out_path "${WORKSPACE}"'
+            archiveArtifacts artifacts: 'report_*.pdf'
+          }
+          error('Issues in image found')
+        }
       }
     )
     stage('Push Image to Registry') {
